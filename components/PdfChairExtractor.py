@@ -9,16 +9,40 @@ import os
 
 class PdfChairExtractor:
     """
-    Eine Klasse zum Extrahieren und Strukturieren von ERC Panel-Mitgliedern 
-    aus PDF-Dokumenten mithilfe von pdfminer.
+    Extrahiert ERC Panel-Mitglieder (z. B. Panel Chairs) aus PDF-Dokumenten 
+    und konvertiert sie in eine strukturierte Pandas DataFrame.
 
-    Die Klasse liest PDF-Dateien (z. B. 'ERC-2024-AdG-panel-members.pdf'), 
-    extrahiert relevante Textinformationen und erstellt daraus eine 
-    strukturierte Tabelle mit Domain, Subdomain, Vorname, Nachname, 
-    vollständigem Namen und Position (Chair oder Member).
+    Diese Klasse wurde speziell für ERC-Panellisten wie 
+    „ERC-2024-AdG-panel-members.pdf“ oder 
+    „Panel_Chairs_ERC_Starting_Grant_2026.pdf“ entwickelt. 
+    Sie erkennt automatisch Domains (PE, LS, SH), Panels (z. B. PE1 Mathematics),
+    und ordnet die Namen der Professor:innen (Chairs) zu.
+
+    Ablauf:
+        1. Extrahiert Textinhalte aus der PDF mit pdfminer.
+        2. Identifiziert ERC-Domains und zugehörige Panelcodes.
+        3. Extrahiert Professorennamen (beginnend mit „Prof.“).
+        4. Erstellt eine DataFrame mit den Spalten:
+           ['Lastname', 'Forename', 'Subdomain', 'Type', 'ERC-Date', 'Panel'].
+
+    Beispiel:
+        >>> extractor = PdfChairExtractor()
+        >>> df = extractor.extract_text(
+        ...     pdf_path="../data/Panel_Chairs_ERC_Starting_Grant_2026.pdf",
+        ...     print_cmd=True,
+        ...     save_csv=True
+        ... )
+        >>> print(df.head())
+
+    Erwartete Ausgabe:
+        Lastname | Forename   | Subdomain          | Type  | ERC-Date
+        ----------|------------|--------------------|-------|----------
+        van de Geer | Sara     | Mathematics (PE1)  | Chair | 2024
+        Bouscaren  | Elisabeth | Mathematics (PE1)  | Chair | 2024
     """
 
     def __init__(self):
+        
         pass
        
 
@@ -28,22 +52,56 @@ class PdfChairExtractor:
                      output_path:str="../data/output/"
                      ) -> pd.DataFrame:
         """
-        Extrahiert Text aus einer ERC Panel Chairs PDF-Datei und konvertiert 
-        ihn in eine strukturierte Pandas DataFrame-Tabelle.
+        Liest eine ERC Panel PDF-Datei ein, extrahiert Text und erstellt 
+        eine strukturierte DataFrame-Tabelle mit Panel Chairs.
 
-        Dieser Extractor ist speziell für PDFs im Format:
-        "PE1 Mathematics
-         Prof. Name1
-         Prof. Name2"
+        Diese Methode ist optimiert für das typische ERC-Layout:
+        ```
+        PE1 Mathematics
+        Prof. Name1
+        Prof. Name2
+        ...
+        PE2 Physics
+        Prof. Name3
+        ```
         
+        Ablauf:
+            - Identifiziert die ERC-Domain (PE, LS, SH)
+            - Extrahiert alle Panels und deren Namen
+            - Liest die Namen der Panel Chairs („Prof. ...“)
+            - Ordnet sie dem jeweiligen Panel zu
+            - Gibt eine strukturierte Pandas DataFrame zurück
+
         Args:
-            pdf_path (str): Pfad zur PDF-Datei
-            print_cmd (bool): Debug-Ausgaben anzeigen
-            save_csv (bool): Ergebnis als CSV speichern
-            output_path (str): Zielordner für CSV
+            pdf_path (str): 
+                Pfad zur zu verarbeitenden PDF-Datei.
+            print_cmd (bool, optional): 
+                Wenn True, werden Debug-Informationen und Vorschauen der Ergebnisse ausgegeben. 
+                Standard: False.
+            save_csv (bool, optional): 
+                Wenn True, wird die extrahierte Tabelle als CSV im angegebenen Output-Ordner gespeichert. 
+                Standard: False.
+            output_path (str, optional): 
+                Zielordner für die Ausgabe der CSV-Datei. 
+                Standard: "../data/output/".
 
         Returns:
-            pd.DataFrame mit Spalten: Lastname, Forename, Subdomain, Type, ERC-Date
+            pd.DataFrame: 
+                Eine DataFrame mit den Spalten:
+                - 'Lastname': Nachname der Person
+                - 'Forename': Vorname der Person
+                - 'Subdomain': Panelname inkl. Code (z. B. "Mathematics (PE1)")
+                - 'Type': Position im Panel (z. B. "Chair")
+                - 'ERC-Date': Jahr der ERC-Publikation (z. B. "2026")
+                - 'Panel': Nur der Panelcode (z. B. "PE1")
+
+        Raises:
+            FileNotFoundError: Wenn die angegebene PDF-Datei nicht existiert.
+            ValueError: Wenn kein Panel oder keine Chair-Einträge gefunden werden.
+
+        Hinweise:
+            - Diese Implementierung geht davon aus, dass alle Namen mit „Prof.“ beginnen.
+            - Panels müssen mit „PE“, „LS“ oder „SH“ gekennzeichnet sein.
         """
 
         text = extract_text(pdf_path)
@@ -147,6 +205,8 @@ class PdfChairExtractor:
                     panel_idx += 1
 
         df = pd.DataFrame(results)
+
+        df['Panel'] = df['Subdomain'].str.split('(').str[-1].str.rstrip(')')
 
         if print_cmd:
             print("\n" + "="*80)
