@@ -54,7 +54,7 @@ class PdfExtractor:
                 Defaults to False.
             output_path (str, optional): 
                 Pfad zum Zielordner für die CSV-Datei.
-                Defaults to "../data/".
+                Defaults to "../data/output/".
 
         Returns:
             pd.DataFrame:
