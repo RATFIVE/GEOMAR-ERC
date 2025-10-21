@@ -25,7 +25,7 @@ class PdfExtractor:
     def extract_text(self, pdf_path:str=None, 
                      print_cmd:bool=False, 
                      save_csv:bool=False,
-                     output_path:str="../data/"
+                     output_path:str="../data/output/"
                      ) -> pd.DataFrame:
         """
         Extrahiert Text aus einer ERC Panel Members PDF-Datei und konvertiert 
@@ -167,7 +167,7 @@ class PdfExtractor:
 
             output_name = f"ERC_{erc_date}_panel_members_chairs.csv" if erc_date else "ERC_panel_members_chairs.csv"
             # save as CSV
-            output_path = Path("../data").joinpath(output_name)
+            output_path = Path(output_path).joinpath(output_name)
             print(f"\nSaving filtered DataFrame to {output_path}")
             df_filter.to_csv(output_path, index=False)
 
