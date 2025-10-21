@@ -7,6 +7,7 @@ import pandas as pd
 from nameparser import HumanName
 from tqdm import tqdm
 
+
 pdf_path = "../data/ERC-2024-AdG-panel-members.pdf"
 
 text = extract_text(pdf_path)
