@@ -140,7 +140,8 @@ class PdfExtractor:
                     "Forename": hn.first,
                     "Lastname": hn.last,
                     "Fullname": name,
-                    "Type": ptype
+                    "Type": ptype,
+                    "ERC-Date": erc_date
                 })
         df = pd.DataFrame(results)
 
@@ -156,7 +157,7 @@ class PdfExtractor:
         df = df[~bad_mask].reset_index(drop=True)
 
         # Testausgabe
-        df_filter = df.loc[:, ['Forename', 'Lastname', 'Fullname', 'Type']]
+        df_filter = df.loc[:, ['Forename', 'Lastname', 'Fullname', 'Type', 'ERC-Date']]
         if print_cmd:
             print("\n", "##########"*5, "Filtered Dataframe:", "##########"*5)
             print(df_filter.head(20))
