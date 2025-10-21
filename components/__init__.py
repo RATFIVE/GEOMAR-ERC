@@ -1,3 +1,3 @@
-from .PdfExtractor import PdfExtractor
+from .PdfMemberExtractor import PdfExtractor
 
-__all__ = ["PdfExtractor"]
+__all__ = ["PdfMemberExtractor", "PdfChairExtractor"]

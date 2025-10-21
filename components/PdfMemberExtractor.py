@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 
 
-class PdfExtractor:
+class PdfMemberExtractor:
     """
     Eine Klasse zum Extrahieren und Strukturieren von ERC Panel-Mitgliedern 
     aus PDF-Dokumenten mithilfe von pdfminer.
@@ -170,9 +170,9 @@ class PdfExtractor:
             # save as CSV
             output_path = Path(output_path).joinpath(output_name)
             print(f"\nSaving filtered DataFrame to {output_path}")
-            df_filter.to_csv(output_path, index=False)
+            df.to_csv(output_path, index=False)
 
-        return df_filter
+        return df
     
 
 
@@ -181,5 +181,5 @@ class PdfExtractor:
 if __name__ == "__main__":
 
     pdf_path = "../data/ERC-2024-AdG-panel-members.pdf"
-    extractor = PdfExtractor()
-    df = extractor.extract_text(pdf_path=pdf_path, print_cmd=True, save_csv=True)
+    extractor = PdfMemberExtractor()
+    df = extractor.extract_text(pdf_path=pdf_path, print_cmd=True, save_csv=False)
