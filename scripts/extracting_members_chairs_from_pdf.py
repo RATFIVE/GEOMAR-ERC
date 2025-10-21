@@ -62,14 +62,19 @@ df = pd.DataFrame(results)
 
 # entferne Reihen, deren Fullname "ERC-" oder Seitenangaben wie "p.8/8" (oder generell "p.<num>/<num>") enthält
 bad_mask = df['Fullname'].str.contains(r'ERC-|p\.\s*\d+/\d+', case=False, na=False, regex=True)
+
 # optional: anzeigen, was entfernt würde
-#print(df[bad_mask])
+print("\n", "##########"*5, "Removing the following rows:", "##########"*5)
+print(df[bad_mask].loc[:, ['Forename', 'Lastname', 'Fullname', 'Type']])
+
 # tatsächliches Entfernen
 df = df[~bad_mask].reset_index(drop=True)
 
 # Testausgabe
 df_filter = df.loc[:, ['Forename', 'Lastname', 'Fullname', 'Type']]
-
+print("\n", "##########"*5, "Filtered Dataframe:", "##########"*5)
+print(df_filter.head(20))
+print(df_filter.tail(20))
 # save as CSV
 df.to_csv("../data/ERC_2024_panel_members_chairs.csv", index=False)
 
