@@ -85,7 +85,7 @@ class PdfMemberExtractor:
 
         text = extract_text(pdf_path)
         lines = [l.strip() for l in text.split("\n") if l.strip()]
-        print(text)
+        print(lines)  # Debug: show first 10 lines
 
         results = []
         current_domain = None
