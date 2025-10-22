@@ -85,6 +85,7 @@ class PdfMemberExtractor:
 
         text = extract_text(pdf_path)
         lines = [l.strip() for l in text.split("\n") if l.strip()]
+        print(text)
 
         results = []
         current_domain = None
@@ -163,6 +164,19 @@ class PdfMemberExtractor:
             print(df_filter.head(20))
             print(df_filter.tail(20))
 
+
+        # Funktion zum Korrigieren von fehlenden Leerzeichen im Namen
+        def split_missing_space(name):
+            # Wenn ein Kleinbuchstabe direkt vor einem Großbuchstaben steht → trennen
+            fixed = re.sub(r'([a-z])([A-Z])', r'\1 \2', name)
+            return fixed
+
+        # Fix names with missing spaces
+        df['Fullname'] = df['Fullname'].apply(split_missing_space)
+        # Fix Forename with the corrected Fullname
+        df['Forename'] = df['Fullname'].str.split(' ').str[:-1].str.join(' ')
+        df['Lastname'] = df['Fullname'].str.split(' ').str[-1]
+
         if save_csv:
             os.makedirs(output_path, exist_ok=True) # make sure output directory exists
 
@@ -172,6 +186,10 @@ class PdfMemberExtractor:
             print(f"\nSaving filtered DataFrame to {output_path}")
             df.to_csv(output_path, index=False)
 
+        
+
+
+
         return df
     
 
@@ -180,6 +198,8 @@ class PdfMemberExtractor:
 
 if __name__ == "__main__":
 
-    pdf_path = "../data/ERC-2024-AdG-panel-members.pdf"
+    pdf_path = "../data/ERC-2025-StG-panel-members.pdf"
+
     extractor = PdfMemberExtractor()
     df = extractor.extract_text(pdf_path=pdf_path, print_cmd=True, save_csv=False)
+    print(df['Subdomain'].unique())
