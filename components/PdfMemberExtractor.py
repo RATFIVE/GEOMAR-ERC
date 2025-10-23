@@ -20,9 +20,19 @@ from collections import defaultdict
 
 
 class PdfMemberExtractor:
+
+
+
     
     def __init__(self):
         pass
+
+
+
+
+
+
+
 
     def filter_df(self, df:pd.DataFrame):
 
@@ -34,11 +44,25 @@ class PdfMemberExtractor:
             df = df[~df['Member'].str.contains(term, na=False)]
         
         return df
+
+
+
+
+
+
+
     
     def check_misspelled_names(self, df:pd.DataFrame):
         # Correct e.g. FrankVerstraete to Frank Verstraete pattern
         df['Member'] = df['Member'].str.replace(r'([a-z])([A-Z])', r'\1 \2', regex=True) 
         return df
+
+
+
+
+
+
+
     
     def save_csv(self, df:pd.DataFrame, output_path:str, filename:str):
         # Ensure output directory exists
@@ -46,6 +70,12 @@ class PdfMemberExtractor:
         csv_path = os.path.join(output_path, filename)
         df.to_csv(csv_path, index=False)
         print(f"CSV saved to: {csv_path}")
+
+
+
+
+
+
 
     def extract(self, pdf_path:str=None, 
                      print_cmd:bool=False, 
@@ -107,6 +137,13 @@ class PdfMemberExtractor:
         if save_csv:
             self.save_csv(df, output_path, f"ERC_{erc_date}_panel_members.csv" if erc_date else "ERC_panel_members.csv")
         return df
+
+
+
+
+
+
+        
 
 
 
