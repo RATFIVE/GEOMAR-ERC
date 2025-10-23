@@ -128,11 +128,11 @@ class PdfMemberExtractor:
 
         # Ausgabe
         
-        for chair in df['Chair'].unique():
-            df_chair = df[df['Chair'] == chair]
-            print("\n" + "-"*40 + "\n")
-            print(df_chair)
-            print("\n" + "-"*40 + "\n")
+        # for chair in df['Chair'].unique():
+        #     df_chair = df[df['Chair'] == chair]
+        #     print("\n" + "-"*40 + "\n")
+        #     print(df_chair)
+        #     print("\n" + "-"*40 + "\n")
             
         if save_csv:
             self.save_csv(df, output_path, f"ERC_{erc_date}_panel_members.csv" if erc_date else "ERC_panel_members.csv")
@@ -143,7 +143,7 @@ class PdfMemberExtractor:
 
 
 
-        
+
 
 
 
