@@ -231,6 +231,6 @@ class PdfChairExtractor:
 
 if __name__ == "__main__":
 
-    pdf_path = "../data/Panel_Chairs_ERC_Starting_Grant_2026.pdf"
+    pdf_path = "../data/Panel_Members_ERC_Advanced_Grants_2023.pdf"
     extractor = PdfChairExtractor()
     df = extractor.extract_text(pdf_path=pdf_path, print_cmd=True, save_csv=True)

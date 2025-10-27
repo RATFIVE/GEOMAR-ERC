@@ -5,7 +5,7 @@ import pandas as pd
 
 
 extractor = PdfMemberExtractor()
-df_pdf = extractor.extract(pdf_path="../data/ERC-2025-StG-panel-members.pdf")
+df_pdf = extractor.extract(pdf_path="../data/ERC-2024-AdG-panel-members.pdf")
 df_pdf['ERC-Date'] = df_pdf['ERC-Date'].astype(int)
 erc_date = int(df_pdf['ERC-Date'].unique()[0])
 
@@ -40,13 +40,22 @@ df_excel['Name'] = df_excel['Name'].str.strip()
 
 
 print("\n##########"*5)
-print("PDF DataFrame:")
+print("Excel DataFrame:")
 print(df_excel.head())
 
 
 for chair in df_pdf['Chair'].unique():
     df_pdf_chair = df_pdf[df_pdf['Chair'] == chair]
-    chair_review_panel = df_excel.loc[df_excel['Name'] == chair]['review_panel'].values[0]
+    print(df_pdf_chair)
+    
+    # Safe lookup mit Fallback
+    matches = df_excel.loc[df_excel['Name'] == chair, 'review_panel']
+    if len(matches) > 0:
+        chair_review_panel = matches.values[0]
+    else:
+        print(f"WARNING: Chair '{chair}' not found in Excel - setting review_panel to None")
+        chair_review_panel = None  # oder einen Standardwert wie "UNKNOWN"
+    
     df_pdf.loc[df_pdf['Chair'] == chair, 'review_panel'] = chair_review_panel
 
 for chair in df_pdf['Chair'].unique():
@@ -75,6 +84,7 @@ df_pdf = df_pdf.drop_duplicates().reset_index(drop=True)
 
 df_merged = pd.merge(df_pdf, df_excel, left_on='name', right_on='Name', how='left', indicator=True, suffixes=('_pdf', '_excel'))
 
+
 funding_scheme_name = df_merged.loc[df_merged["funding_scheme"].notnull()]["funding_scheme"].unique()[0]
 
 # fill NaN in funding_scheme with the unique value
@@ -100,4 +110,5 @@ print("\n##########"*5)
 print("Merged Dataframe:")
 print(df.head())
 
-
+print("\n")
+print(df["first name"].unique())
