@@ -55,10 +55,6 @@ class ExcelPanelMemberExtractor:
         df_excel['Name'] = df_excel['Name'].str.strip()
 
 
-        print("\n##########"*5)
-        print("Excel DataFrame:")
-        print(df_excel.head())
-
 
         return df_excel
     

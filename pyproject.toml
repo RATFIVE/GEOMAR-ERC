@@ -13,10 +13,12 @@ dependencies = [
     "pdfminer-six>=20250506",
     "pdfplumber>=0.11.7",
     "pypdf2>=3.0.1",
+    "scholarly>=1.7.11",
     "tabula-py>=2.10.0",
     "torch>=2.9.0",
     "tqdm>=4.67.1",
     "transformers>=4.57.1",
+    "wikipedia-api>=0.8.1",
 ]
 [tool.setuptools]
 packages = ["components", "scripts"]

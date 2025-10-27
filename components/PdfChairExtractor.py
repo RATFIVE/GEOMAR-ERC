@@ -188,8 +188,8 @@ class PdfChairExtractor:
                     # Split name: Erstes Wort = Lastname, Rest = Forename
                     name_parts = name.split(' ', 1)
                     if len(name_parts) == 2:
-                        lastname = name_parts[0]
-                        forename = name_parts[1]
+                        forename = name_parts[0]
+                        lastname = name_parts[1]
                     else:
                         lastname = name
                         forename = ""
