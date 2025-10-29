@@ -5,7 +5,7 @@ import pandas as pd
 
 
 extractor = PdfMemberExtractor()
-df_pdf = extractor.extract(pdf_path="../data/ERC-2024-AdG-panel-members.pdf")
+df_pdf = extractor.extract(pdf_path="../data/2024/ERC-2024-AdG-panel-members.pdf")
 df_pdf['ERC-Date'] = df_pdf['ERC-Date'].astype(int)
 erc_date = int(df_pdf['ERC-Date'].unique()[0])
 
