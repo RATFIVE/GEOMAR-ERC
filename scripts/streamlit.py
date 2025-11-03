@@ -62,7 +62,7 @@ def process_researcher_profile(results: dict, model: str = "deepseek-r1:1.5b") -
 # Streamlit UI
 # -----------------------------
 st.set_page_config(page_title="Researcher Excel Explorer", layout="wide")
-st.title("Excel Analyzer mit OpenAlex & Ollama")
+st.title("ERC Profilgenerator mit OpenAlex & Ollama")
 
 # Upload-Feld
 uploaded_file = st.file_uploader("📁 Excel-Datei hochladen", type=["xlsx"])
@@ -123,7 +123,7 @@ if uploaded_file is not None:
         st.subheader("🔎 OpenAlex- und Ollama-Profilgenerierung")
         unique_members = missing_rows['Name'].unique()
         selected_member = st.multiselect(f"Wähle ein Mitglied aus: ({len(unique_members)})", unique_members, default=unique_members)
-        profile_column = st.selectbox("Wähle die Spalte für das generierte Profil:", options=selected_columns, index=1)
+        profile_column = st.selectbox("Wähle die Spalte für das generierte Profil: (Field)", options=selected_columns, index=1)
         affiliation_column = st.selectbox("Wähle die Spalte für die Affiliation:", options=selected_columns, index=0)
         names_to_search = selected_member if selected_member else st.text_input("Name eingeben, um Profil zu erstellen:")
         if st.button("Profil generieren"):
