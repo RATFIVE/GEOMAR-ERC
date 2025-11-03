@@ -10,4 +10,5 @@ Diese Informationen gibt es über Google Scholar
 
 2. Excel Datei von [link](https://erc.europa.eu/projects-statistics/erc-dashboard) Formattieren
 
-
+- Den Text stichpunktartig machen statt Fließtext
+- Spalte "Grantees" über das Dashboard befüllen. Hier sind die Spalten (Kreuzreferen)
