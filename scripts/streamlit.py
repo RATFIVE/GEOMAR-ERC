@@ -6,6 +6,7 @@ import ollama
 from tqdm import tqdm
 import random
 from pprint import pprint
+import pycountry
 
 # -----------------------------
 # Hilfsfunktionen
@@ -58,6 +59,13 @@ def process_researcher_profile(results: dict, model: str = "deepseek-r1:1.5b") -
 
     response = ollama.chat(model=model, messages=[{"role": "user", "content": prompt}])
     return response["message"]["content"] if "message" in response else str(response)
+
+# Funktion, um den ISO-Alpha-2-Code zu bekommen
+def get_country_code(name):
+    try:
+        return pycountry.countries.lookup(name).alpha_2
+    except LookupError:
+        return None  # Falls kein Land gefunden wird
 
 
 
@@ -225,7 +233,7 @@ with st.sidebar:
     st.markdown("Lade die 'List of funded projects' Excel-Datei vom [ERC-Dashboard](https://dashboard.tech.ec.europa.eu/qs_digit_dashboard_mt/public/sense/app/c140622a-87e0-412e-8b29-9b5ddd857e13/sheet/61a0bd1d-cd6d-4ac8-8b55-80d8661e44c0/state/analysis) hoch.")
 
 st.divider()
-st.title("ERC Dashboard")
+st.subheader("ERC Dashboard")
 if list_of_funded_projects_excel and grantees_and_panel_member_excel is not None:
     # Datei als DataFrame laden
     try:
@@ -237,45 +245,159 @@ if list_of_funded_projects_excel and grantees_and_panel_member_excel is not None
         # Benötigte Spalten auswählen Host Institution(s), Country, Abstract, Project Title, Researcher, Acronym, Call, CORDIS Link, Panel, Domain
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            # select the Researcher column and Project Title column
-            column_researcher = st.selectbox("Wähle die Spalte für 'Acronym':", df_dashboard.columns.tolist(), index=1)
+            dashboard_column_aconym = st.selectbox("Wähle die Spalte für 'Acronym':", df_dashboard.columns.tolist(), index=1, key="df_dashboard_acronym")
         with col2:
-            column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_dashboard.columns.tolist(), index=2)
+            dashboard_column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_dashboard.columns.tolist(), index=2, key="df_dashboard_project_title")
         with col3:
-            column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_dashboard.columns.tolist(), index=3)
+            dashboard_column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_dashboard.columns.tolist(), index=3, key="df_dashboard_abstract")
         with col4:
-            column_call = st.selectbox("Wähle die Spalte für 'Researcher':", df_dashboard.columns.tolist(), index=4)
+            dashboard_column_researcher = st.selectbox("Wähle die Spalte für 'Researcher':", df_dashboard.columns.tolist(), index=4, key="df_dashboard_researcher")
         with col5:
-            column_cordis_link = st.selectbox("Wähle die Spalte für 'Institution':", df_dashboard.columns.tolist(), index=5)
-        
+            dashboard_column_institution = st.selectbox("Wähle die Spalte für 'Institution':", df_dashboard.columns.tolist(), index=5, key="df_dashboard_institution")
+
         col6, col7, col8, col9, col10 = st.columns(5)
         with col6:
-            column_host_institution = st.selectbox("Wähle die Spalte für 'Country':", df_dashboard.columns.tolist(), index=6)
+            dashboard_column_host_country = st.selectbox("Wähle die Spalte für 'Country':", df_dashboard.columns.tolist(), index=6, key="df_dashboard_host_country")
         with col7:
-            column_country = st.selectbox("Wähle die Spalte für 'Call':", df_dashboard.columns.tolist(), index=9)
+            dashboard_column_call = st.selectbox("Wähle die Spalte für 'Call':", df_dashboard.columns.tolist(), index=9, key="df_dashboard_call")
         with col8:
-            column_panel = st.selectbox("Wähle die Spalte für 'Domain':", df_dashboard.columns.tolist(), index=11)
+            dashboard_column_domain = st.selectbox("Wähle die Spalte für 'Domain':", df_dashboard.columns.tolist(), index=11, key="df_dashboard_domain")
         with col9:
-            column_domain = st.selectbox("Wähle die Spalte für 'Panel':", df_dashboard.columns.tolist(), index=12)
+            dashboard_column_panel = st.selectbox("Wähle die Spalte für 'Panel':", df_dashboard.columns.tolist(), index=12, key="df_dashboard_panel")
         with col10:
-            column_domain_2 = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_dashboard.columns.tolist(), index=17)
+            dashboard_column_cordis_link = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_dashboard.columns.tolist(), index=17, key="df_dashboard_cordis_link")
 
+        df_dashboard_selected_columns = [dashboard_column_aconym, dashboard_column_project_title, dashboard_column_abstract, dashboard_column_researcher, dashboard_column_institution, dashboard_column_host_country, dashboard_column_call, dashboard_column_domain, dashboard_column_panel, dashboard_column_cordis_link]
 
 
         st.dataframe(df_dashboard)
 
+        
 
+        st.subheader("Tabllenblatt 'Grantees' verarbeiten")
         sheet_names_gapme = pd.ExcelFile(grantees_and_panel_member_excel).sheet_names
         col1, col2 = st.columns(2)
         with col1:
-            sheet_name_gapme = st.selectbox("Wähle das Tabellenblatt 'Grantees':", sheet_names_gapme, key="sheet_name_gapme")
+            sheet_name_gapme = st.selectbox("Wähle das Tabellenblatt 'Grantees':", sheet_names_gapme, key="sheet_name_gapme", index=1)
         df_pm = pd.read_excel(grantees_and_panel_member_excel, sheet_name=sheet_name_gapme)
-        
+        df_pm.columns = df_pm.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
 
-        df_pm_name = df_pm["First Name"].astype(str) + " " + df_pm["Last Name"].astype(str)
+        # Benötigte Spalten auswählen Host Institution(s), Country, Abstract, Project Title, Researcher, Acronym, Call, CORDIS Link, Panel, Domain
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            pm_column_last_name = st.selectbox("Wähle die Spalte für 'Last Name':", df_pm.columns.tolist(), index=0, key="df_pm_last_name")
+        with col2:
+            pm_column_first_name = st.selectbox("Wähle die Spalte für 'First Name':", df_pm.columns.tolist(), index=1, key="df_pm_first_name")
+        with col3:
+            pm_column_institution = st.selectbox("Wähle die Spalte für 'Institution':", df_pm.columns.tolist(), index=2, key="df_pm_institution")
+        with col4:
+            pm_column_country = st.selectbox("Wähle die Spalte für 'Host Country':", df_pm.columns.tolist(), index=3, key="df_pm_country")
+        with col5:
+            pm_column_aconym = st.selectbox("Wähle die Spalte für 'Acronym':", df_pm.columns.tolist(), index=4, key="df_pm_acronym")
+        # with col6:
+        #     column_host_institution = st.selectbox("Wähle die Spalte für 'Host Institution(s)':", df_pm.columns.tolist(), index=11, key="df_pm_host_institution")
+
+
+        col7, col8, col9, col10, col11, col12 = st.columns(6)
+        with col7:
+            pm_column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_pm.columns.tolist(), index=5, key="df_pm_project_title")
+        with col8:
+            pm_column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_pm.columns.tolist(), index=6, key="df_pm_abstract")
+        with col9:
+            pm_column_panel = st.selectbox("Wähle die Spalte für 'Panel':", df_pm.columns.tolist(), index=7, key="df_pm_panel")
+        with col10:
+            pm_column_domain = st.selectbox("Wähle die Spalte für 'Domain':", df_pm.columns.tolist(), index=8, key="df_pm_domain")
+
+        with col11:
+            pm_column_call = st.selectbox("Wähle die Spalte für 'Call':", df_pm.columns.tolist(), index=9, key="df_pm_call")
+        with col12:
+            pm_column_cordis_link = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_pm.columns.tolist(), index=10, key="df_pm_cordis_link")
+
+        df_pm_name = df_pm[pm_column_first_name].astype(str) + " " + df_pm[pm_column_last_name].astype(str)
         df_pm["Name"] = df_pm_name.str.strip()
 
         st.dataframe(df_pm)
+
+
+
+        
+
+
+        df_pm = pd.read_excel(grantees_and_panel_member_excel, sheet_name=sheet_name_gapme)  # Lade alle Tabellenblätter
+        df_pm["Name"] = df_pm[pm_column_first_name].astype(str) + " " + df_pm[pm_column_last_name].astype(str)
+        df_pm["Name"] = df_pm["Name"].str.strip()
+        unique_panels = df_pm[pm_column_panel].unique().tolist()
+
+
+        df_dashboard = df_dashboard[df_dashboard_selected_columns]
+        
+        # rename columns
+        df_dashboard.rename(columns={
+            dashboard_column_researcher: "Name",
+            dashboard_column_host_country: pm_column_country,
+        }, inplace=True)
+        # Neue Spalte mit Länderkürzel
+        df_dashboard[pm_column_country] = df_dashboard[pm_column_country].apply(get_country_code)
+
+
+        # select from Life Sciences (LS) only the word in ()
+        df_dashboard[pm_column_domain] = df_dashboard[pm_column_domain].str.extract(r'\((.*?)\)')
+
+        # only select the word bevore - in LS1 - Molecules of Life: Biological Mechanisms...
+        df_dashboard[pm_column_panel] = df_dashboard[pm_column_panel].str.split('-').str[0].str.strip()
+
+        # only select the Panel values that are in the unique_panels list
+        df_dashboard = df_dashboard[df_dashboard[pm_column_panel].isin(unique_panels)]
+
+        st.subheader("Zusammengeführte Daten")
+        # merge both dataframes on Name
+        df_combined = pd.concat([df_pm, df_dashboard], ignore_index=True, sort=False)
+        # Maske erstellen
+        mask = df_combined[pm_column_last_name].isnull() & df_combined[pm_column_first_name].isnull()
+
+        # Überprüfen, ob die Spalte "Name" korrekt formatiert ist
+        df_combined["Name"] = df_combined["Name"].str.strip()
+
+        # Spalte "Name" in "First Name" und "Last Name" aufteilen
+        split_names = df_combined.loc[mask, "Name"].str.split(' ', n=1, expand=True)
+
+        split_names.columns = [pm_column_first_name, pm_column_last_name]
+
+        # Fallback für fehlende Nachnamen
+        split_names[pm_column_last_name] = split_names[pm_column_last_name]
+
+        # Zuweisung der aufgeteilten Namen
+        df_combined.loc[mask, [pm_column_first_name, pm_column_last_name]] = split_names
+
+        df_combined = df_combined.drop_duplicates().reset_index(drop=True).drop(columns=['Name'])
+
+        st.dataframe(df_combined)
+
+
+        st.subheader("💾 Aktualisierte Datei mit beiden Tabellenblättern herunterladen")
+
+        # Datei mit allen Tabellenblättern laden
+        excel_data = pd.ExcelFile(grantees_and_panel_member_excel)
+        all_sheets = {sheet: excel_data.parse(sheet) for sheet in excel_data.sheet_names}
+
+        # Ersetze die Tabellenblätter "sheet_name" und "sheet_name_gapme"
+        all_sheets[sheet_name] = df_gapm  # Aktualisiertes DataFrame für sheet_name
+        all_sheets[sheet_name_gapme] = df_combined  # Aktualisiertes DataFrame für sheet_name_gapme
+
+        # Speichere die Datei mit den aktualisierten Tabellenblättern
+        output_file = "updated_grantees_and_panel_member.xlsx"
+        with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+            for sheet, data in all_sheets.items():
+                data.to_excel(writer, sheet_name=str(sheet), index=False)
+
+        st.success(f"Die Datei wurde erfolgreich gespeichert: {output_file}")
+        st.download_button(
+            label="📥 Aktualisierte Datei herunterladen",
+            data=open(output_file, "rb"),
+            file_name=output_file,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        
         
 
 
