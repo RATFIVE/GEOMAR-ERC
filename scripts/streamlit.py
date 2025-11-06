@@ -25,13 +25,23 @@ def fetch_openalex_id(name: str) -> dict | None:
             return None
 
         first_result = results_list[0]
+        pprint(first_result)
         topics = first_result.get('topics', [])
         sorted_topics = sorted(topics, key=lambda x: x.get('count', 0), reverse=True)
-        top_topics = [t['display_name'] for t in sorted_topics[:3]]
+        top_topics = [t['display_name'] for t in sorted_topics[:4]]
 
         affiliations = first_result.get('affiliations', [])
-        affiliation = affiliations[0]["institution"]["display_name"] if affiliations else None
+        
+        # Funktion, um die aktuellste Institution zu finden
+        def get_most_recent_affiliation(affiliations):
+            if not affiliations:
+                return None
+            # Sortiere nach dem höchsten Jahr in der `years`-Liste
+            most_recent = max(affiliations, key=lambda x: max(x.get('years', [0])))
+            return most_recent['institution']
 
+        # Aktuellste Institution abrufen
+        most_recent_affiliation = get_most_recent_affiliation(affiliations)
         x_concepts = first_result.get('x_concepts', [])
         x_concepts_fields_list = [
             concept['display_name'] for concept in x_concepts if concept.get("score", 0) >= 90
@@ -40,12 +50,12 @@ def fetch_openalex_id(name: str) -> dict | None:
         return {
             "Name": name,
             "topics": top_topics,
-            "affiliation": affiliation,
+            "affiliation": most_recent_affiliation['display_name'] if most_recent_affiliation else None,
             "x_concepts": x_concepts_fields_list
         }
 
     else:
-        st.error(f"⚠️ Fehler bei Anfrage: {response.status_code}")
+        #st.error(f"⚠️ Fehler bei Anfrage: {response.status_code}")
         return None
 
 
@@ -221,8 +231,8 @@ if grantees_and_panel_member_excel is not None:
 
                 
 
-    except Exception as e:
-        st.error(f"Fehler beim Einlesen der Datei: {e}")
+    except Exception:
+        st.info("Keine fehlenden Werte gefunden.")
 else:
     st.info("⬆️ Bitte lade die 'grantees_and_panel_members' Excel-Datei hoch.")
 
@@ -390,18 +400,25 @@ if list_of_funded_projects_excel and grantees_and_panel_member_excel is not None
             for sheet, data in all_sheets.items():
                 data.to_excel(writer, sheet_name=str(sheet), index=False)
 
-        st.success(f"Die Datei wurde erfolgreich gespeichert: {output_file}")
-        st.download_button(
-            label="📥 Aktualisierte Datei herunterladen",
-            data=open(output_file, "rb"),
-            file_name=output_file,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+        if output_file:
+            st.success(f"Die Datei wurde erfolgreich gespeichert: {output_file}")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button(
+                    label="📥 Aktualisierte Datei herunterladen",
+                    data=open(output_file, "rb"),
+                    file_name=output_file,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+        else:
+            st.error("Fehler beim Speichern der Datei.")
+        
         
         
 
 
     except Exception as e:
-        st.error(f"Fehler beim Einlesen der Datei: {e}")
+        st.error(f"Datei noch nicht hochgeladen oder Fehler beim Einlesen der Datei: {e}")
 else:
     st.info("⬆️ Bitte lade die 'List of funded projects(armUGTS)' Excel-Datei hoch.")
