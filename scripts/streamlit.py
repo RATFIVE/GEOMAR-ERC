@@ -3,11 +3,9 @@ import pandas as pd
 import time
 import requests
 import ollama
-from tqdm import tqdm
 import random
 from pprint import pprint
 import pycountry
-import streamlit.components.v1 as components
 
 
 # -----------------------------
