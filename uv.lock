@@ -781,6 +781,8 @@ dependencies = [
     { name = "pypdf2" },
     { name = "requests" },
     { name = "scholarly" },
+    { name = "selenium" },
+    { name = "semanticscholar" },
     { name = "streamlit" },
     { name = "tabula-py" },
     { name = "torch" },
@@ -788,6 +790,7 @@ dependencies = [
     { name = "transformers" },
     { name = "undetected-chromedriver" },
     { name = "watchdog" },
+    { name = "webdriver-manager" },
     { name = "wikipedia-api" },
 ]
 
@@ -809,6 +812,8 @@ requires-dist = [
     { name = "pypdf2", specifier = ">=3.0.1" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "scholarly", specifier = ">=1.7.11" },
+    { name = "selenium", specifier = ">=4.38.0" },
+    { name = "semanticscholar", specifier = ">=0.11.0" },
     { name = "streamlit", specifier = ">=1.51.0" },
     { name = "tabula-py", specifier = ">=2.10.0" },
     { name = "torch", specifier = ">=2.9.0" },
@@ -816,6 +821,7 @@ requires-dist = [
     { name = "transformers", specifier = ">=4.57.1" },
     { name = "undetected-chromedriver", specifier = ">=3.5.5" },
     { name = "watchdog", specifier = ">=6.0.0" },
+    { name = "webdriver-manager", specifier = ">=4.0.2" },
     { name = "wikipedia-api", specifier = ">=0.8.1" },
 ]
 
@@ -2960,6 +2966,20 @@ wheels = [
 ]
 
 [[package]]
+name = "semanticscholar"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "nest-asyncio" },
+    { name = "tenacity" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8a/5c/18302aad8f094b3e4b8bb79ee82dd0fafceee7811f9844c41f393f8a0e5f/semanticscholar-0.11.0.tar.gz", hash = "sha256:91e1233aedbf8e290daf8556fc7a3a6a6db78fe833adee88fd99ddb0a07a0c17", size = 28283, upload-time = "2025-09-14T01:14:51.832Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/af/0627cf6bb64054d03a1fe8e9b0e659b496794000c30ba4fb921ca8aef20a/semanticscholar-0.11.0-py3-none-any.whl", hash = "sha256:824b7c3d11237ec829a211480ed1ed05f4ee9dfdf03e226b04c3d2051ea19b6e", size = 26048, upload-time = "2025-09-14T01:14:50.575Z" },
+]
+
+[[package]]
 name = "setuptools"
 version = "80.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3535,6 +3555,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/24/30/6b0809f4510673dc723187aeaf24c7f5459922d01e2f794277a3dfb90345/wcwidth-0.2.14.tar.gz", hash = "sha256:4d478375d31bc5395a3c55c40ccdf3354688364cd61c4f6adacaa9215d0b3605", size = 102293, upload-time = "2025-09-22T16:29:53.023Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/af/b5/123f13c975e9f27ab9c0770f514345bd406d0e8d3b7a0723af9d43f710af/wcwidth-0.2.14-py2.py3-none-any.whl", hash = "sha256:a7bb560c8aee30f9957e5f9895805edd20602f2d7f720186dfd906e82b4982e1", size = 37286, upload-time = "2025-09-22T16:29:51.641Z" },
+]
+
+[[package]]
+name = "webdriver-manager"
+version = "4.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/24/4f/6e44478908c5133f680378d687f14ecaa99feed2c535344fcf68d8d21500/webdriver_manager-4.0.2.tar.gz", hash = "sha256:efedf428f92fd6d5c924a0d054e6d1322dd77aab790e834ee767af392b35590f", size = 25940, upload-time = "2024-07-25T08:13:49.331Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/b5/3bd0b038d80950ec13e6a2c8d03ed8354867dc60064b172f2f4ffac8afbe/webdriver_manager-4.0.2-py2.py3-none-any.whl", hash = "sha256:75908d92ecc45ff2b9953614459c633db8f9aa1ff30181cefe8696e312908129", size = 27778, upload-time = "2024-07-25T08:13:47.917Z" },
 ]
 
 [[package]]

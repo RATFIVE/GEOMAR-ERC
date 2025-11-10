@@ -7,6 +7,300 @@ import random
 from pprint import pprint
 import pycountry
 
+# Driver for Firefox, Chrome, Edge, etc.
+from selenium import webdriver
+from random import uniform
+
+# Mode of locating html elements: ID, CSS_SELECTOR, XPATH, ...
+from selenium.webdriver.common.by import By               
+
+# Using specific keyboard keys like ENTER, ESCAPE, ...
+from selenium.webdriver.common.keys import Keys
+
+# Methods for dropdown
+from selenium.webdriver.support.select import Select
+
+import pandas as pd
+from time import sleep
+from pprint import pprint
+
+
+class ResearchGateSelenium:
+
+    def __init__(self, name: str = "Gregor-Anderluh", headless: bool = True):
+        
+
+        self.BASE_URL = 'https://www.researchgate.net/'
+        self.name = name.replace(" ", "-")
+        self.headless = headless
+        self.driver = self.get_driver()
+    
+
+    
+    def get_driver(self):
+        # FirefoxOptions-Objekt anlegen
+        options = webdriver.FirefoxOptions()
+        if self.headless:
+            options.add_argument("--headless")  # <-- sauberer Weg
+
+
+        
+        # Neues Profil erstellen
+        profile = webdriver.FirefoxProfile()
+
+        # Beispiel: User-Agent Header setzen
+        profile.set_preference("general.useragent.override", "MyCustomUserAgent/1.0")
+
+        # Beispiel: Downloadverhalten anpassen
+        profile.set_preference("browser.download.folderList", 2)
+        profile.set_preference("browser.download.dir", "/tmp")
+        profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv")
+
+        # Profil zu den Optionen hinzufügen
+        options.profile = profile
+
+        # WebDriver starten
+        self.driver = webdriver.Firefox(options=options)
+        return self.driver
+    
+
+    
+    def close_driver(self):
+        """Beendet den WebDriver, falls er noch aktiv ist."""
+        self.driver.quit()
+
+    
+    
+    
+    def random_sleep(self, min_seconds=1.0, max_seconds=3.0):
+        sleep_time = uniform(min_seconds, max_seconds)
+        sleep(sleep_time)
+
+    def klick_privacy_accept(self):
+        # find button id="didomi-notice-agree-button"
+        self.random_sleep()
+        agree_button = self.driver.find_element(By.ID, "didomi-notice-agree-button")
+        agree_button.click()
+
+    def find_skills(self):
+        # Navigiere zur Profilseite (Beispiel-URL)
+        profile_url = str(self.BASE_URL) + 'profile/' + str(self.name)
+        self.driver.get(profile_url)
+        self.driver.implicitly_wait(10)
+        self.klick_privacy_accept()
+
+        # Finde den Abschnitt "Skills and Expertise"
+        introduction = self.driver.find_element(By.CSS_SELECTOR, "div.nova-legacy-c-card:nth-child(4) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)")
+
+
+        introduction_text = introduction.text
+        self.close_driver()
+
+        skills_list = introduction_text.split('\n')[1:]  # [1:] überspringt den Titel
+
+        return skills_list
+    
+
+
+
+
+class ORCIDClient:
+    """Client für ORCID API."""
+    
+    BASE_URL = "https://pub.orcid.org/v3.0"
+    
+    @staticmethod
+    def get_profile(orcid_id: str) -> dict | None:
+        """Holt vollständiges ORCID-Profil."""
+        url = f"{ORCIDClient.BASE_URL}/{orcid_id}"
+        headers = {'Accept': 'application/json'}
+        
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"❌ ORCID API Fehler: {e}")
+            return None
+    
+    @staticmethod
+    def get_current_affiliation(orcid_id: str) -> str | None:
+        """
+        Holt die aktuelle Affiliation (neueste Employment oder Education).
+        
+        Returns:
+            Name der Institution oder None
+        """
+        profile = ORCIDClient.get_profile(orcid_id)
+        
+        if not profile:
+            return None
+        
+        try:
+            activities = profile.get('activities-summary', {})
+            
+            # 1. Versuch: Employments (bevorzugt)
+            employments = activities.get('employments', {})
+            if employments:
+                employment_groups = employments.get('affiliation-group', [])
+                
+                # Alle Employments mit End-Datum = None (aktuell) oder neuestes Jahr
+                current_employments = []
+                
+                for group in employment_groups:
+                    summaries = group.get('summaries', [])
+                    for summary in summaries:
+                        employment_summary = summary.get('employment-summary', {})
+                        
+                        # Prüfe ob aktuell (kein End-Datum)
+                        end_date = employment_summary.get('end-date')
+                        
+                        if end_date is None:  # Aktuell
+                            org_name = employment_summary.get('organization', {}).get('name')
+                            if org_name:
+                                return org_name
+                        
+                        # Sammle alle mit Datum für Fallback
+                        start_date = employment_summary.get('start-date', {})
+                        year = start_date.get('year', {}).get('value', 0) if start_date else 0
+                        
+                        current_employments.append({
+                            'name': employment_summary.get('organization', {}).get('name'),
+                            'year': year,
+                            'end_date': end_date
+                        })
+                
+                # Wenn kein aktuelles gefunden: Nimm das neueste
+                if current_employments:
+                    latest = max(current_employments, key=lambda x: x['year'])
+                    return latest['name']
+            
+            # # 2. Versuch: Education (falls keine Employment)
+            # educations = activities.get('educations', {})
+            # if educations:
+            #     education_groups = educations.get('affiliation-group', [])
+                
+            #     for group in education_groups:
+            #         summaries = group.get('summaries', [])
+            #         for summary in summaries:
+            #             education_summary = summary.get('education-summary', {})
+                        
+            #             end_date = education_summary.get('end-date')
+            #             if end_date is None:  # Noch in Ausbildung
+            #                 org_name = education_summary.get('organization', {}).get('name')
+            #                 if org_name:
+            #                     return org_name
+            
+            # # 3. Fallback: Erste gefundene Institution
+            # if employment_groups:
+            #     first_group = employment_groups[0]
+            #     summaries = first_group.get('summaries', [])
+            #     if summaries:
+            #         first_summary = summaries[0].get('employment-summary', {})
+            #         org = first_summary.get('organization', {})
+            #         return org.get('name')
+        
+        except (KeyError, ValueError, TypeError) as e:
+            print(f"⚠️ Fehler beim Extrahieren der Affiliation: {e}")
+        
+        return None
+    
+    @staticmethod
+    def get_keywords(orcid_id: str) -> list[str]:
+        """Holt nur Keywords."""
+        url = f"{ORCIDClient.BASE_URL}/{orcid_id}/keywords"
+        headers = {'Accept': 'application/json'}
+        
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            keywords_list = data.get('keyword', [])
+            return [
+                kw.get('content') 
+                for kw in keywords_list 
+                if kw.get('content')
+            ]
+        except:
+            return []
+    
+    @staticmethod
+    def get_biography(orcid_id: str) -> str | None:
+        """Holt nur Biografie."""
+        profile = ORCIDClient.get_profile(orcid_id)
+        
+        if not profile:
+            return None
+        
+        try:
+            person = profile.get('person', {})
+            biography_obj = person.get('biography')
+            
+            if biography_obj and isinstance(biography_obj, dict):
+                return biography_obj.get('content')
+        except:
+            pass
+        
+        return None
+    
+    @staticmethod
+    def get_research_info(orcid_id: str) -> dict:
+        """
+        Kombiniert alle relevanten Forschungsinformationen inkl. Affiliation.
+        
+        Returns:
+            Dictionary mit affiliation, biography, keywords, works_count
+        """
+        profile = ORCIDClient.get_profile(orcid_id)
+        
+        if not profile:
+            return {
+                'affiliation': None,
+                'biography': None,
+                'keywords': [],
+                'works_count': 0,
+                'orcid': orcid_id
+            }
+        
+        # Aktuelle Affiliation
+        affiliation = ORCIDClient.get_current_affiliation(orcid_id)
+        
+        # Biografie
+        biography = None
+        person = profile.get('person', {})
+        bio_obj = person.get('biography')
+        if bio_obj and isinstance(bio_obj, dict):
+            biography = bio_obj.get('content')
+        
+        # Keywords
+        keywords = []
+        kw_obj = person.get('keywords', {})
+        if kw_obj and isinstance(kw_obj, dict):
+            kw_list = kw_obj.get('keyword', [])
+            keywords = [
+                kw.get('content') 
+                for kw in kw_list 
+                if isinstance(kw, dict) and kw.get('content')
+            ]
+        
+        # Publikationsanzahl
+        works_count = 0
+        activities = profile.get('activities-summary', {})
+        if activities:
+            works = activities.get('works', {})
+            if works and isinstance(works, dict):
+                works_group = works.get('group', [])
+                works_count = len(works_group) if isinstance(works_group, list) else 0
+        
+        return {
+            'affiliation': affiliation,
+            'biography': biography,
+            'keywords': keywords,
+            'works_count': works_count,
+            'orcid': orcid_id
+        }
+
 
 # -----------------------------
 # Hilfsfunktionen
@@ -76,6 +370,84 @@ def get_country_code(name):
         return pycountry.countries.lookup(name).alpha_2
     except LookupError:
         return None  # Falls kein Land gefunden wird
+
+def fetch_openalex_orcid_only(name: str) -> str | None:
+    """
+    Holt nur die ORCID-ID von OpenAlex.
+    
+    Args:
+        name: Vollständiger Name des Forschers
+        
+    Returns:
+        ORCID-ID als String oder None
+    """
+    search_name = name.replace(" ", "+")
+    base_url = f"https://api.openalex.org/authors?filter=display_name.search:{search_name}"
+    
+    try:
+        response = requests.get(base_url, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        results_list = data.get('results', [])
+        
+        if not results_list:
+            print(f"⚠️ Keine OpenAlex-Ergebnisse für '{name}'")
+            return None
+        
+        first_result = results_list[0]
+        orcid = first_result.get('orcid')
+        
+        if orcid:
+            # ORCID ID extrahieren (URL → ID)
+            orcid_id = orcid.split('/')[-1] if '/' in orcid else orcid
+            return orcid_id
+        
+        print(f"⚠️ Keine ORCID gefunden für '{name}'")
+        return None
+    
+    except Exception as e:
+        print(f"❌ Fehler für '{name}': {e}")
+        return None
+
+
+def fetch_researcher_info_orcid_first(name: str) -> dict | None:
+    """
+    Holt ORCID von OpenAlex und alle Daten (inkl. Affiliation) von ORCID.
+    
+    Args:
+        name: Vollständiger Name des Forschers
+        
+    Returns:
+        Dictionary mit allen Forscherdaten oder None
+    """
+    print(f"🔍 Suche ORCID für: {name}")
+    
+    # 1. ORCID von OpenAlex holen
+    orcid_id = fetch_openalex_orcid_only(name)
+    
+    if not orcid_id:
+        print(f"❌ Keine ORCID gefunden für '{name}'")
+        return None
+    
+    print(f"✅ ORCID gefunden: {orcid_id}")
+    
+    # 2. Alle Daten von ORCID holen
+    orcid_data = ORCIDClient.get_research_info(orcid_id)
+    
+    if not orcid_data:
+        print(f"⚠️ ORCID-Daten konnten nicht abgerufen werden")
+        return None
+    
+    # 3. Ergebnis zusammenstellen
+    return {
+        "name": name,
+        "orcid": orcid_id,
+        "affiliation": orcid_data.get('affiliation'),
+        "topics": orcid_data.get('keywords', []),  # Alle Keywords
+        "biography": orcid_data.get('biography'),
+        "works_count": orcid_data.get('works_count', 0)
+    }
 
 
 
@@ -214,7 +586,7 @@ with tab2:
 
                         if name_to_search.strip():
                             with st.spinner(f"Suche nach {name_to_search}..."):
-                                results = fetch_openalex_id(name_to_search)
+                                results = fetch_researcher_info_orcid_first(name_to_search)
 
                                 if results:
                                     #st.json(results)
@@ -226,8 +598,25 @@ with tab2:
                                     profile_text = results.get("topics", [])
                                     # replace list commas with semicolons and make text lowercase
                                     profile_text = "; ".join(profile_text).lower()
-                                    st.success(f"✅ Profil für {name_to_search} generiert")
-                                    #st.write(profile_text)
+
+                                    # if not profile_text:
+                                    #     rg_selenium = ResearchGateSelenium(name=name_to_search, headless=False)
+                                    #     profile_text = rg_selenium.find_skills()
+                                    #     profile_text = "; ".join(profile_text).lower()
+                                    
+
+
+                                    if profile_text and affiliation:
+                                        st.success(f"✅ Profil für {name_to_search} generiert")
+                                    elif profile_text and not affiliation:
+                                        st.warning(f"⚠️ Profil generiert, aber keine Affiliation für {name_to_search} gefunden.")
+                                    
+                                    elif not profile_text and affiliation:
+                                        st.warning(f"⚠️ Affiliation gefunden, aber kein Profil für {name_to_search}.")
+                                        
+                                    else:
+                                        st.error(f"⚠️ Weder Profil noch Affiliation für {name_to_search} gefunden.")
+                                        #st.write(profile_text)
 
                                     df_gapm_member = missing_rows[missing_rows['Name'] == name_to_search]
                                     df_gapm_member[profile_column] = profile_text
@@ -237,9 +626,9 @@ with tab2:
                                     for row_idx in df_gapm_member.index:
                                         df_gapm.at[row_idx, profile_column] = df_gapm_member.at[row_idx, profile_column]
                                         df_gapm.at[row_idx, affiliation_column] = df_gapm_member.at[row_idx, affiliation_column]
-
+                                
                                 else:
-                                    st.warning(f"Keine Daten für {name_to_search} gefunden.")
+                                    st.error(f"⚠️ Keine Daten für {name_to_search} gefunden.")
                             random_time = random.uniform(0.5, 1.5)
                             time.sleep(random_time)
 
@@ -268,8 +657,8 @@ with tab2:
 
                     
 
-        except Exception:
-            st.info("Keine fehlenden Werte gefunden.")
+        except Exception as e:
+            st.info("Keine fehlenden Werte gefunden.\n" + str(e))
     else:
         st.info("⬆️ Bitte lade die 'grantees_and_panel_members' Excel-Datei hoch.")
 
