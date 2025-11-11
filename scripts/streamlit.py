@@ -19,86 +19,222 @@ from selenium.webdriver.common.keys import Keys
 
 # Methods for dropdown
 from selenium.webdriver.support.select import Select
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from random import uniform
+from time import sleep
+from pprint import pprint
 
 import pandas as pd
 from time import sleep
 from pprint import pprint
 
 
-class ResearchGateSelenium:
+import random
+import tempfile
+from selenium import webdriver
 
-    def __init__(self, name: str = "Gregor-Anderluh", headless: bool = True):
-        
-
-        self.BASE_URL = 'https://www.researchgate.net/'
-        self.name = name.replace(" ", "-")
-        self.headless = headless
-        self.driver = self.get_driver()
+class RandomFirefoxProfile:
+    """Erstellt zufällige Firefox-Profile."""
     
-
+    USER_AGENTS = [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    ]
     
-    def get_driver(self):
-        # FirefoxOptions-Objekt anlegen
-        options = webdriver.FirefoxOptions()
-        if self.headless:
-            options.add_argument("--headless")  # <-- sauberer Weg
-
-
+    LANGUAGES = ["en-US", "en-GB", "de-DE", "fr-FR", "es-ES"]
+    
+    SCREEN_RESOLUTIONS = [
+        (1920, 1080),
+        (1366, 768),
+        (1440, 900),
+        (1536, 864),
+        (1280, 720),
+    ]
+    
+    @staticmethod
+    def create():
+        """Erstellt ein zufälliges Firefox-Profil."""
         
-        # Neues Profil erstellen
-        profile = webdriver.FirefoxProfile()
-
-        # Beispiel: User-Agent Header setzen
-        profile.set_preference("general.useragent.override", "MyCustomUserAgent/1.0")
-
-        # Beispiel: Downloadverhalten anpassen
+        # Temporäres Profil
+        temp_dir = tempfile.mkdtemp(prefix="firefox_")
+        profile = webdriver.FirefoxProfile(temp_dir)
+        
+        # Zufälliger User-Agent
+        user_agent = random.choice(RandomFirefoxProfile.USER_AGENTS)
+        profile.set_preference("general.useragent.override", user_agent)
+        
+        # Zufällige Sprache
+        language = random.choice(RandomFirefoxProfile.LANGUAGES)
+        profile.set_preference("intl.accept_languages", language)
+        
+        # Download-Einstellungen
         profile.set_preference("browser.download.folderList", 2)
         profile.set_preference("browser.download.dir", "/tmp")
         profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "text/csv")
+        
+        # Anti-Detection
+        profile.set_preference("dom.webdriver.enabled", False)
+        profile.set_preference("useAutomationExtension", False)
+        profile.set_preference("privacy.trackingprotection.enabled", True)
+        
+        # Zufällige Viewport-Größe (simuliert verschiedene Bildschirme)
+        width, height = random.choice(RandomFirefoxProfile.SCREEN_RESOLUTIONS)
+        profile.set_preference("layout.css.devPixelsPerPx", str(random.uniform(0.9, 1.1)))
+        
+        # WebGL und Canvas Fingerprinting reduzieren
+        profile.set_preference("webgl.disabled", random.choice([True, False]))
+        profile.set_preference("privacy.resistFingerprinting", True)
+        
+        print("🎲 Zufälliges Profil erstellt:")
+        print(f"   User-Agent: {user_agent[:50]}...")
+        print(f"   Sprache: {language}")
+        print(f"   Auflösung: {width}x{height}")
+        
+        return profile
 
-        # Profil zu den Optionen hinzufügen
+
+class ResearchGateSelenium:
+
+    def __init__(self, name: str = "Gregor-Anderluh", headless: bool = True):
+        self.BASE_URL = 'https://www.researchgate.net/'
+        self.name = name.replace(" ", "-")
+        self.headless = headless
+        self.driver = None
+    
+    def get_driver(self):
+        """Initialisiert den Firefox WebDriver."""
+        if self.driver is not None:
+            return self.driver
+        
+        options = webdriver.FirefoxOptions()
+        if self.headless:
+            options.add_argument("--headless")
+        
+        profile = RandomFirefoxProfile.create()
         options.profile = profile
-
-        # WebDriver starten
+        
         self.driver = webdriver.Firefox(options=options)
         return self.driver
     
-
-    
     def close_driver(self):
-        """Beendet den WebDriver, falls er noch aktiv ist."""
-        self.driver.quit()
-
-    
-    
+        """Beendet den WebDriver sicher."""
+        if self.driver is not None:
+            try:
+                self.driver.quit()
+                self.driver = None
+            except Exception as e:
+                print(f"⚠️ Fehler beim Schließen: {e}")
+            finally:
+                self.driver = None
     
     def random_sleep(self, min_seconds=1.0, max_seconds=3.0):
+        """Zufällige Wartezeit."""
         sleep_time = uniform(min_seconds, max_seconds)
         sleep(sleep_time)
-
+        return sleep_time
+    
+    def access_denied_check(self):
+        """Prüft auf Access Denied."""
+        try:
+            page_html = self.driver.page_source
+            if "<h1>Access denied</h1>" in page_html:
+                print("⚠️ Access denied detected.")
+                return True
+            return False
+        except Exception as e:
+            print(f"⚠️ Fehler bei Access Check: {e}")
+            return False
+    
     def klick_privacy_accept(self):
-        # find button id="didomi-notice-agree-button"
-        self.random_sleep()
-        agree_button = self.driver.find_element(By.ID, "didomi-notice-agree-button")
-        agree_button.click()
-
+        """Klickt auf Privacy-Accept-Button."""
+        try:
+            self.random_sleep(1, 2)
+            wait = WebDriverWait(self.driver, 10)
+            agree_button = wait.until(
+                EC.element_to_be_clickable((By.ID, "didomi-notice-agree-button"))
+            )
+            agree_button.click()
+            print("✅ Privacy-Banner akzeptiert")
+        except Exception as e:
+            print(f"ℹ️ Kein Privacy-Banner gefunden (bereits akzeptiert?)")
+    
     def find_skills(self):
-        # Navigiere zur Profilseite (Beispiel-URL)
-        profile_url = str(self.BASE_URL) + 'profile/' + str(self.name)
-        self.driver.get(profile_url)
-        self.driver.implicitly_wait(10)
-        self.klick_privacy_accept()
-
-        # Finde den Abschnitt "Skills and Expertise"
-        introduction = self.driver.find_element(By.CSS_SELECTOR, "div.nova-legacy-c-card:nth-child(4) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)")
-
-
-        introduction_text = introduction.text
-        self.close_driver()
-
-        skills_list = introduction_text.split('\n')[1:]  # [1:] überspringt den Titel
-
-        return skills_list
+        """Extrahiert Skills vom ResearchGate-Profil."""
+        
+        # 1. Driver initialisieren
+        self.get_driver()
+        
+        # 2. Zur Profilseite navigieren
+        profile_url = f"{self.BASE_URL}profile/{self.name}"
+        print(f"🌐 Öffne: {profile_url}")
+        
+        try:
+            self.driver.get(profile_url)
+            self.driver.implicitly_wait(10)
+            
+            # 3. Privacy-Banner akzeptieren
+            self.klick_privacy_accept()
+            self.random_sleep(2, 4)
+            #self.driver.refresh()
+            
+            # 4. Access Denied prüfen
+            if self.access_denied_check():
+                
+                self.close_driver()
+                sleep_time = uniform(15, 20)
+                print(f"⚠️ Zugriff verweigert. Warte {round(sleep_time, 1)} Sekunden...")
+                sleep(sleep_time)
+                return self.find_skills()  # Rekursiver Aufruf
+            
+            # 5. Skills-Element finden (mehrere Selektoren probieren)
+            introduction = None
+            
+            selectors = [
+                (By.CSS_SELECTOR, "div.nova-legacy-c-card:nth-child(4) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)"),
+                (By.XPATH, "/html/body/div[2]/main/section[3]/div/div[2]/div[2]/div/div"),
+                (By.CSS_SELECTOR, "div.nova-legacy-c-card--spacing-xl div.nova-legacy-o-stack__item"),
+            ]
+            
+            for by, selector in selectors:
+                try:
+                    introduction = self.driver.find_element(by, selector)
+                    print(f"✅ Element gefunden mit: {by} - {selector[:50]}...")
+                    break
+                except Exception:
+                    continue
+            
+            if not introduction:
+                print("❌ Skills-Bereich nicht gefunden")
+                return None
+            
+            # 6. Text extrahieren
+            introduction_text = introduction.text
+            
+            # 7. In Liste konvertieren
+            skills_list = [
+                skill.strip() 
+                for skill in introduction_text.split('\n') 
+                if skill.strip() and skill.strip() != 'Skills and Expertise'
+            ]
+            
+            print(f"✅ {len(skills_list)} Skills gefunden")
+            return skills_list
+        
+        except Exception as e:
+            print(f"❌ Fehler beim Abrufen der Skills: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+        
+        finally:
+            # 8. Driver schließen (immer!)
+            self.close_driver()
     
 
 
@@ -599,10 +735,10 @@ with tab2:
                                     # replace list commas with semicolons and make text lowercase
                                     profile_text = "; ".join(profile_text).lower()
 
-                                    # if not profile_text:
-                                    #     rg_selenium = ResearchGateSelenium(name=name_to_search, headless=False)
-                                    #     profile_text = rg_selenium.find_skills()
-                                    #     profile_text = "; ".join(profile_text).lower()
+                                    if not profile_text:
+                                        rg_selenium = ResearchGateSelenium(name=name_to_search, headless=True)
+                                        profile_text = rg_selenium.find_skills() 
+                                        profile_text = "; ".join(profile_text).lower() if profile_text else None
                                     
 
 
