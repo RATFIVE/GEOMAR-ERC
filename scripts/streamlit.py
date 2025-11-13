@@ -275,6 +275,7 @@ class ORCIDClient:
         try:
             activities = profile.get('activities-summary', {})
             
+
             # 1. Versuch: Employments (bevorzugt)
             employments = activities.get('employments', {})
             if employments:
@@ -708,6 +709,10 @@ with tab2:
                 affiliation_column = st.selectbox("Wähle die Spalte für die Affiliation:", options=selected_columns, index=0)
             names_to_search = selected_member if selected_member else st.text_input("Name eingeben, um Profil zu erstellen:")
 
+            num_generated_profiles = 0
+            num_generated_affiliations = 0
+            num_not_found = 0
+            num_green = 0
             if st.button("Profil generieren"):
                 if not names_to_search:
                     st.warning("Bitte mindestens einen Namen eingeben.")
@@ -744,13 +749,19 @@ with tab2:
 
                                     if profile_text and affiliation:
                                         st.success(f"✅ Profil für {name_to_search} generiert")
+                                        num_generated_profiles += 1
+                                        num_generated_affiliations += 1
+                                        num_green += 1
                                     elif profile_text and not affiliation:
+                                        num_generated_profiles += 1
                                         st.warning(f"⚠️ Profil generiert, aber keine Affiliation für {name_to_search} gefunden.")
                                     
                                     elif not profile_text and affiliation:
+                                        num_generated_affiliations += 1
                                         st.warning(f"⚠️ Affiliation gefunden, aber kein Profil für {name_to_search}.")
                                         
                                     else:
+                                        num_not_found += 1
                                         st.error(f"⚠️ Weder Profil noch Affiliation für {name_to_search} gefunden.")
                                         #st.write(profile_text)
 
@@ -765,6 +776,7 @@ with tab2:
                                 
                                 else:
                                     st.error(f"⚠️ Keine Daten für {name_to_search} gefunden.")
+                                    num_not_found += 1
                             random_time = random.uniform(0.5, 1.5)
                             time.sleep(random_time)
 
@@ -777,6 +789,16 @@ with tab2:
                     # Alles fertig 🎉
                     progress_bar.empty()
                     status_text.text("✅ Alle Profile wurden verarbeitet!")
+
+                    df_generated_profiles_affiliations = pd.DataFrame({
+                        "Vollstädnige Profile" : [num_green],
+                        "Generierte Profile": [num_generated_profiles],
+                        "Generierte Affiliations": [num_generated_affiliations],
+                        "Nicht gefunden": [num_not_found]
+                    })
+                    st.dataframe(df_generated_profiles_affiliations)
+
+                    
 
                     st.subheader("📊 Aktualisierte Daten:")
                     # drop column 'Name' before displaying
