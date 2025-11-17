@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import time
 import requests
-import ollama
+# import ollama
 import random
 from pprint import pprint
 import pycountry
@@ -35,6 +35,8 @@ from pprint import pprint
 import random
 import tempfile
 from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
+
 
 class RandomFirefoxProfile:
     """Erstellt zufällige Firefox-Profile."""
@@ -115,11 +117,18 @@ class ResearchGateSelenium:
         options = webdriver.FirefoxOptions()
         if self.headless:
             options.add_argument("--headless")
-        
+
+        # Docker-spezifische Optionen
+        options.add_argument("--no-sandbox") # Notwendig in Docker-Umgebungen
+        options.add_argument("--disable-dev-shm-usage") # Verhindert Probleme mit gemeinsam genutztem Speicher
+
         profile = RandomFirefoxProfile.create()
         options.profile = profile
+
+        service = Service(executable_path="/usr/local/bin/geckodriver")
+
         
-        self.driver = webdriver.Firefox(options=options)
+        self.driver = webdriver.Firefox(options=options, service=service)
         return self.driver
     
     def close_driver(self):
@@ -490,16 +499,16 @@ def fetch_openalex_id(name: str) -> dict | None:
         return None
 
 
-def process_researcher_profile(results: dict, model: str = "deepseek-r1:1.5b") -> str:
-    prompt = f"""
-    You are a scientific summarizer. Based on the following structured information about a researcher, 
-    summarize the following text in bullet points and concisely. Use semicolons (;) to separate the points, not complete sentences. This should highlight key topics or content.
-    Input data:
-    {results}
-    """
+# def process_researcher_profile(results: dict, model: str = "deepseek-r1:1.5b") -> str:
+#     prompt = f"""
+#     You are a scientific summarizer. Based on the following structured information about a researcher, 
+#     summarize the following text in bullet points and concisely. Use semicolons (;) to separate the points, not complete sentences. This should highlight key topics or content.
+#     Input data:
+#     {results}
+#     """
 
-    response = ollama.chat(model=model, messages=[{"role": "user", "content": prompt}])
-    return response["message"]["content"] if "message" in response else str(response)
+#     response = ollama.chat(model=model, messages=[{"role": "user", "content": prompt}])
+#     return response["message"]["content"] if "message" in response else str(response)
 
 # Funktion, um den ISO-Alpha-2-Code zu bekommen
 def get_country_code(name):
@@ -766,8 +775,8 @@ with tab2:
                                         #st.write(profile_text)
 
                                     df_gapm_member = missing_rows[missing_rows['Name'] == name_to_search]
-                                    df_gapm_member[profile_column] = profile_text
-                                    df_gapm_member[affiliation_column] = affiliation
+                                    df_gapm_member.loc[:, profile_column] = profile_text
+                                    df_gapm_member.loc[:, affiliation_column] = affiliation
 
                                     # Ursprünglichen DataFrame aktualisieren
                                     for row_idx in df_gapm_member.index:

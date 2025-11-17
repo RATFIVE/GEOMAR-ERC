@@ -1,0 +1,31 @@
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ratfive/geomar-erc-app
+    ports:
+      - "8501:8501"
+    volumes:
+      # App-Code (für Live-Entwicklung)
+      - ./scripts:/app/scripts
+      - ./data:/app/data
+      - firefox-profiles:/tmp  # temporäre Firefox-Profile
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      # virtuelles Display für Xvfb
+      - DISPLAY=:99
+      # optional: falls du spezifische Selenium-Einstellungen brauchst
+      # - MOZ_HEADLESS=1
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  firefox-profiles:
+
+networks:
+  app-network:
+    driver: bridge

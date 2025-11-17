@@ -17,3 +17,9 @@ Diese Informationen gibt es über Google Scholar
 - Die Topics über die Wissenschaftler über Researchgate ziehen. Da OpenAlex nicht aktuell ist. 
 - Aktuell geht es nicht weil Streamlit nicht auf den Firefox Webbrowser zugreifen kann.
 
+
+## Nützlicher Befehl um Multi-Arch Docker Images zu bauen und zu pushen:
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t ratfive/geomar-erc:latest \
+  --push .
