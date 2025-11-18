@@ -596,6 +596,51 @@ def fetch_researcher_info_orcid_first(name: str) -> dict | None:
     }
 
 
+def highlight_continuous_members(df):
+    """
+    Markiere Mitglieder die 4 mal aufeinander im Panel waren.
+    Dabei wird eine neue Spalte 'Continuous_Member' hinzugefügt, die True für kontinuierliche Mitglieder und False für andere Mitglieder enthält.
+    Hier wird nur das Jahr True markiert, in dem das Mitglied zum 4. Mal in Folge teilgenommen hat.
+    Wenn ein Mitglied z.B. 2015, 2016, 2017, 2018 teilgenommen hat, wird nur 2018 als True markiert. Wenn das Mitglied wieder 2020 teilnimmt, wird 2020 nicht markiert, da die Teilnahme nicht kontinuierlich ist.
+
+    Args:
+        df (pd.DataFrame): _DataFrame mit Panel-Mitgliedern und deren Teilnahmejahren_
+    Returns:
+        pd.DataFrame: _DataFrame mit zusätzlicher Spalte 'Continuous_Member'_
+    """
+
+    # # add beispiel daten
+    # print(df.shape)
+    # df = pd.concat([df, pd.DataFrame(
+    #     {
+    #     "First name": ["Alice", "Alice", "Alice", "Alice", "Alice"],
+    #     "Last name": ["Adam", "Adam", "Adam", "Adam", "Adam"],
+    #     "Call": ["Panel 2015", "Panel 2016", "Panel 2017", "Panel 2018", "Panel 2019"],
+    #     })
+    #     ], 
+    # ignore_index=True,)
+    # print(df.shape)
+
+    
+    
+    df.columns = df.columns.str.strip().str.replace(r'\s+', ' ', regex=True) # Spaltennamen bereinigen
+    df["Name"] = df["First name"] + " " + df["Last name"]
+    df["Year"] = df["Call"].str.extract(r'(\d{4})').astype(int)
+    df = df.sort_values(by=["Name", "Year"])
+    df["4x Continuous Member"] = False
+    for name, group in df.groupby("Name"):
+        years = group["Year"].values
+        count = 1
+        for i in range(1, len(years)): # Starte bei 1, da wir das vorherige Jahr vergleichen
+            if years[i] == years[i-1] + 1: # Überprüfe ob das Jahr auf das vorherige Jahr folgt
+                count += 1 # Erhöhe den Zähler für aufeinanderfolgende Jahre
+                if count >= 4: # Wenn der Zähler 4 erreicht, markiere das Jahr als kontinuierlich
+                    df.loc[(df["Name"] == name) & (df["Year"] == years[i]), "Continuous_Member"] = True
+            else:
+                count = 1
+    df.drop(columns=["Name", "Year"], inplace=True)
+    return df
+
 
 
 
@@ -610,7 +655,7 @@ st.set_page_config(page_title="Researcher Excel Explorer", layout="wide")
 
 
 
-tab1, tab2, tab3 = st.tabs(["Step 1: File Upload", "Step 2: ERC Profilgenerator mit OpenAlex", "Step 3: Grantees und Panel Members zusammenführen"])
+tab1, tab2, tab3 = st.tabs(["Step 1: File Upload", "Step 2: ERC Profilgenerator", "Step 3: Grantees und Panel Members zusammenführen"])
 with tab1:
     st.info("ℹ️ Lade die erforderlichen Excel-Dateien hoch.")
     col1, col2 = st.columns(2)
@@ -639,17 +684,17 @@ with tab1:
     st.subheader("Anleitung:")
     st.markdown("""
     1. Schritt — Dateien hochladen: Im Tab "Step 1: File Upload" lade die Excel-Datei mit Grantees & Panel Members hoch. Optional: lade hier auch die "List of funded projects" (Dashboard‑Export).
-    2. Schritt — Profile generieren: Öffne "Step 2: ERC Profilgenerator mit OpenAlex" (ERC Profilgenerator mit OpenAlex), wähle das Tabellenblatt und die relevanten Spalten aus, überprüfe fehlende Werte und klicke "Profil generieren", um Felder wie "Field" und "Affiliation" automatisch zu befüllen.
+    2. Schritt — Profile generieren: Öffne "Step 2: ERC Profilgenerator" (ERC Profilgenerator), wähle das Tabellenblatt und die relevanten Spalten aus, überprüfe fehlende Werte und klicke "Profil generieren", um Felder wie "Field" und "Affiliation" automatisch zu befüllen.
     3. Schritt — Zusammenführen & Export: Im Tab "Step 3: Grantees und Panel Members zusammenführen" wähle die entsprechenden Spalten aus beiden Dateien aus, führe die Tabellen zusammen und lade die aktualisierte Excel‑Datei herunter.
 
     **Kurz-Tipps:**
     - Achte auf korrekte Spaltennamen (z. B. "First name", "Last name", "Call").
     - Nutze den Call‑Filter, um gezielt Jahrgänge/Programme zu bearbeiten.
-    - Bei fehlenden OpenAlex‑Ergebnissen überprüfe die Schreibweise des Namens.
+    - Bei fehlenden Ergebnissen überprüfe die Schreibweise des Namens.
     """)
 
 with tab2:
-    st.subheader("ERC Profilgenerator mit OpenAlex")
+    st.subheader("ERC Profilgenerator")
     if grantees_and_panel_member_excel is not None:
         # Datei als DataFrame laden
         try:
@@ -660,7 +705,8 @@ with tab2:
             with col1:
                 sheet_name = st.selectbox("Wähle ein Tabellenblatt:", sheet_names)
             df_gapm = pd.read_excel(grantees_and_panel_member_excel, sheet_name=sheet_name)
-            df_gapm.columns = df_gapm.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
+            df_gapm.columns = df_gapm.columns.str.strip().str.replace(r'\s+', ' ', regex=True) # Spaltennamen bereinigen
+            df_gapm = highlight_continuous_members(df_gapm)
 
             #st.subheader("🧾 Vorschau der Daten:")
             #st.dataframe(df_gapm.head())
@@ -707,8 +753,8 @@ with tab2:
                 
 
             st.divider()
-            # OpenAlex-Profil abrufen
-            st.subheader("🔎 OpenAlex- Profilgenerierung")
+            # Profil abrufen
+            st.subheader("🔎 Profilgenerierung")
             unique_members = missing_rows['Name'].unique()
             selected_member = st.multiselect(f"Wähle ein Mitglied aus: ({len(unique_members)})", unique_members, default=unique_members)
             col1, col2 = st.columns(2)
