@@ -22,10 +22,15 @@ WORKDIR /app
 # Python-Abhängigkeiten
 # requirements.txt sollte streamlit, selenium usw. enthalten
 COPY requirements.txt .
+COPY .streamlit/ /root/.streamlit/
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Deine App kopieren
 COPY . .
+
+# Streamlit Port freigeben
+EXPOSE 8501
 
 # Xvfb + Streamlit starten
 # Wichtig: DISPLAY muss mit docker-compose übereinstimmen (:99)
