@@ -125,10 +125,17 @@ class ResearchGateSelenium:
         profile = RandomFirefoxProfile.create()
         options.profile = profile
 
-        service = Service(executable_path="/usr/local/bin/geckodriver")
-
+        try:
+            service = Service(executable_path="/usr/local/bin/geckodriver")
+            self.driver = webdriver.Firefox(options=options, service=service)
+        except Exception as e:
+            print(f"⚠️ Fehler beim Starten des WebDrivers: {e}")
         
-        self.driver = webdriver.Firefox(options=options, service=service)
+        try:
+            self.driver = webdriver.Firefox(options=options)
+        except Exception as e:
+                print(f"⚠️ Fehler beim Starten des WebDrivers: {e}")
+
         return self.driver
     
     def close_driver(self):
@@ -635,7 +642,7 @@ def highlight_continuous_members(df):
             if years[i] == years[i-1] + 1: # Überprüfe ob das Jahr auf das vorherige Jahr folgt
                 count += 1 # Erhöhe den Zähler für aufeinanderfolgende Jahre
                 if count >= 4: # Wenn der Zähler 4 erreicht, markiere das Jahr als kontinuierlich
-                    df.loc[(df["Name"] == name) & (df["Year"] == years[i]), "Continuous_Member"] = True
+                    df.loc[(df["Name"] == name) & (df["Year"] == years[i]), "4x Continuous Member"] = True
             else:
                 count = 1
     df.drop(columns=["Name", "Year"], inplace=True)
@@ -1021,6 +1028,11 @@ with tab3:
             df_combined.loc[mask, [pm_column_first_name, pm_column_last_name]] = split_names
 
             df_combined = df_combined.drop_duplicates().reset_index(drop=True).drop(columns=['Name'])
+
+            # remove [...] from column dashboard_column_institution
+            if dashboard_column_institution in df_combined.columns:
+                df_combined[dashboard_column_institution] = df_combined[dashboard_column_institution].str.replace(r'\s*\[.*?\]\s*', '', regex=True)
+
 
             st.dataframe(df_combined)
 
