@@ -37,5 +37,5 @@ EXPOSE 8501
 CMD bash -c "\
     Xvfb :99 -screen 0 1920x1080x24 & \
     export DISPLAY=:99 && \
-    streamlit run scripts/streamlit.py --server.port=${STREAMLIT_SERVER_PORT:-8501} --server.address=${STREAMLIT_SERVER_ADDRESS:-0.0.0.0} \
+    streamlit run app/streamlit.py --server.port=${STREAMLIT_SERVER_PORT:-8501} --server.address=${STREAMLIT_SERVER_ADDRESS:-0.0.0.0} \
 "
