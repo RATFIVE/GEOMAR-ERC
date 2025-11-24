@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ratfive/geomar-erc-app
+    container_name: geomar-erc
     ports:
       - "8501:8501"
     volumes:

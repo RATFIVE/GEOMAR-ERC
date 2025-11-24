@@ -1,0 +1,12 @@
+*.logs
+.env
+/.git
+/.venv
+/data
+/notebooks
+/archive
+/scripts
+*.xlsx
+*.xls
+*.csv
+*.pdf
