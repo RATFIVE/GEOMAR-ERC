@@ -333,14 +333,6 @@ with tab3:
 
             st.dataframe(df_pm)
 
-
-
-            
-
-
-            df_pm = pd.read_excel(grantees_and_panel_member_excel, sheet_name=sheet_name_gapme)  # Lade alle Tabellenblätter
-            df_pm["Name"] = df_pm[pm_column_first_name].astype(str) + " " + df_pm[pm_column_last_name].astype(str)
-            df_pm["Name"] = df_pm["Name"].str.strip()
             unique_panels = df_pm[pm_column_panel].unique().tolist()
 
 
