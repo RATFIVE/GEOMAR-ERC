@@ -248,36 +248,39 @@ with tab3:
     st.subheader("ERC Dashboard")
     if list_of_funded_projects_excel and grantees_and_panel_member_excel is not None:
         # Datei als DataFrame laden
-        try:
+        # try:
             sheet_names_lofpe = pd.ExcelFile(list_of_funded_projects_excel).sheet_names
             sheet_name_lofpe = sheet_names_lofpe[0]
             df_dashboard = pd.read_excel(list_of_funded_projects_excel, sheet_name=sheet_name_lofpe)
             df_dashboard.columns = df_dashboard.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
+            cols = df_dashboard.columns.tolist()
+            def get_safe_index(columns, desired_index):
+                return desired_index if 0 <= desired_index < len(columns) else 0
 
             # Benötigte Spalten auswählen Host Institution(s), Country, Abstract, Project Title, Researcher, Acronym, Call, CORDIS Link, Panel, Domain
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
-                dashboard_column_aconym = st.selectbox("Wähle die Spalte für 'Acronym':", df_dashboard.columns.tolist(), index=1, key="df_dashboard_acronym")
+                dashboard_column_aconym = st.selectbox("Wähle die Spalte für 'Acronym':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 1), key="df_dashboard_acronym")
             with col2:
-                dashboard_column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_dashboard.columns.tolist(), index=2, key="df_dashboard_project_title")
+                dashboard_column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 2), key="df_dashboard_project_title")
             with col3:
-                dashboard_column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_dashboard.columns.tolist(), index=3, key="df_dashboard_abstract")
+                dashboard_column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 3), key="df_dashboard_abstract")
             with col4:
-                dashboard_column_researcher = st.selectbox("Wähle die Spalte für 'Researcher':", df_dashboard.columns.tolist(), index=4, key="df_dashboard_researcher")
+                dashboard_column_researcher = st.selectbox("Wähle die Spalte für 'Researcher':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 4), key="df_dashboard_researcher")
             with col5:
-                dashboard_column_institution = st.selectbox("Wähle die Spalte für 'Institution':", df_dashboard.columns.tolist(), index=5, key="df_dashboard_institution")
+                dashboard_column_institution = st.selectbox("Wähle die Spalte für 'Institution':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 5), key="df_dashboard_institution")
 
             col6, col7, col8, col9, col10 = st.columns(5)
             with col6:
-                dashboard_column_host_country = st.selectbox("Wähle die Spalte für 'Country':", df_dashboard.columns.tolist(), index=6, key="df_dashboard_host_country")
+                dashboard_column_host_country = st.selectbox("Wähle die Spalte für 'Country':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 6), key="df_dashboard_host_country")
             with col7:
-                dashboard_column_call = st.selectbox("Wähle die Spalte für 'Call':", df_dashboard.columns.tolist(), index=9, key="df_dashboard_call")
+                dashboard_column_call = st.selectbox("Wähle die Spalte für 'Call':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 9), key="df_dashboard_call")
             with col8:
-                dashboard_column_domain = st.selectbox("Wähle die Spalte für 'Domain':", df_dashboard.columns.tolist(), index=11, key="df_dashboard_domain")
+                dashboard_column_domain = st.selectbox("Wähle die Spalte für 'Domain':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 11), key="df_dashboard_domain")
             with col9:
-                dashboard_column_panel = st.selectbox("Wähle die Spalte für 'Panel':", df_dashboard.columns.tolist(), index=12, key="df_dashboard_panel")
+                dashboard_column_panel = st.selectbox("Wähle die Spalte für 'Panel':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 12), key="df_dashboard_panel")
             with col10:
-                dashboard_column_cordis_link = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_dashboard.columns.tolist(), index=17, key="df_dashboard_cordis_link")
+                dashboard_column_cordis_link = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_dashboard.columns.tolist(), index=get_safe_index(cols, 17), key="df_dashboard_cordis_link")
 
             df_dashboard_selected_columns = [dashboard_column_aconym, dashboard_column_project_title, dashboard_column_abstract, dashboard_column_researcher, dashboard_column_institution, dashboard_column_host_country, dashboard_column_call, dashboard_column_domain, dashboard_column_panel, dashboard_column_cordis_link]
 
@@ -293,37 +296,37 @@ with tab3:
                 sheet_name_gapme = st.selectbox("Wähle das Tabellenblatt 'Grantees':", sheet_names_gapme, key="sheet_name_gapme", index=1)
             df_pm = pd.read_excel(grantees_and_panel_member_excel, sheet_name=sheet_name_gapme)
             df_pm.columns = df_pm.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
-
+            cols = df_pm.columns.tolist()
             # Benötigte Spalten auswählen Host Institution(s), Country, Abstract, Project Title, Researcher, Acronym, Call, CORDIS Link, Panel, Domain
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
-                pm_column_last_name = st.selectbox("Wähle die Spalte für 'Last Name':", df_pm.columns.tolist(), index=0, key="df_pm_last_name")
+                pm_column_last_name = st.selectbox("Wähle die Spalte für 'Last Name':", df_pm.columns.tolist(), index=get_safe_index(cols, 0), key="df_pm_last_name")
             with col2:
-                pm_column_first_name = st.selectbox("Wähle die Spalte für 'First Name':", df_pm.columns.tolist(), index=1, key="df_pm_first_name")
+                pm_column_first_name = st.selectbox("Wähle die Spalte für 'First Name':", df_pm.columns.tolist(), index=get_safe_index(cols, 1), key="df_pm_first_name")
             with col3:
-                pm_column_institution = st.selectbox("Wähle die Spalte für 'Institution':", df_pm.columns.tolist(), index=2, key="df_pm_institution")
+                pm_column_institution = st.selectbox("Wähle die Spalte für 'Institution':", df_pm.columns.tolist(), index=get_safe_index(cols, 2), key="df_pm_institution")
             with col4:
-                pm_column_country = st.selectbox("Wähle die Spalte für 'Host Country':", df_pm.columns.tolist(), index=3, key="df_pm_country")
+                pm_column_country = st.selectbox("Wähle die Spalte für 'Host Country':", df_pm.columns.tolist(), index=get_safe_index(cols, 3), key="df_pm_country")
             with col5:
-                pm_column_aconym = st.selectbox("Wähle die Spalte für 'Acronym':", df_pm.columns.tolist(), index=4, key="df_pm_acronym")
+                pm_column_aconym = st.selectbox("Wähle die Spalte für 'Acronym':", df_pm.columns.tolist(), index=get_safe_index(cols, 4), key="df_pm_acronym")
             # with col6:
             #     column_host_institution = st.selectbox("Wähle die Spalte für 'Host Institution(s)':", df_pm.columns.tolist(), index=11, key="df_pm_host_institution")
 
 
             col7, col8, col9, col10, col11, col12 = st.columns(6)
             with col7:
-                pm_column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_pm.columns.tolist(), index=5, key="df_pm_project_title")
+                pm_column_project_title = st.selectbox("Wähle die Spalte für 'Project Title':", df_pm.columns.tolist(), index=get_safe_index(cols, 5), key="df_pm_project_title")
             with col8:
-                pm_column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_pm.columns.tolist(), index=6, key="df_pm_abstract")
+                pm_column_abstract = st.selectbox("Wähle die Spalte für 'Abstract':", df_pm.columns.tolist(), index=get_safe_index(cols, 6), key="df_pm_abstract")
             with col9:
-                pm_column_panel = st.selectbox("Wähle die Spalte für 'Panel':", df_pm.columns.tolist(), index=7, key="df_pm_panel")
+                pm_column_panel = st.selectbox("Wähle die Spalte für 'Panel':", df_pm.columns.tolist(), index=get_safe_index(cols, 7), key="df_pm_panel")
             with col10:
-                pm_column_domain = st.selectbox("Wähle die Spalte für 'Domain':", df_pm.columns.tolist(), index=8, key="df_pm_domain")
+                pm_column_domain = st.selectbox("Wähle die Spalte für 'Domain':", df_pm.columns.tolist(), index=get_safe_index(cols, 8), key="df_pm_domain")
 
             with col11:
-                pm_column_call = st.selectbox("Wähle die Spalte für 'Call':", df_pm.columns.tolist(), index=9, key="df_pm_call")
+                pm_column_call = st.selectbox("Wähle die Spalte für 'Call':", df_pm.columns.tolist(), index=get_safe_index(cols, 9), key="df_pm_call")
             with col12:
-                pm_column_cordis_link = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_pm.columns.tolist(), index=10, key="df_pm_cordis_link")
+                pm_column_cordis_link = st.selectbox("Wähle die Spalte für 'CORDIS Link':", df_pm.columns.tolist(), index=get_safe_index(cols, 10), key="df_pm_cordis_link")
 
             df_pm_name = df_pm[pm_column_first_name].astype(str) + " " + df_pm[pm_column_last_name].astype(str)
             df_pm["Name"] = df_pm_name.str.strip()
@@ -425,7 +428,8 @@ with tab3:
             
 
 
-        except Exception as e:
-            st.error(f"Datei noch nicht hochgeladen oder Fehler beim Einlesen der Datei: {e}")
+        # except Exception as e:
+        #     st.error(f"Datei noch nicht hochgeladen oder Fehler beim Einlesen der Datei: {e}")
+        #     print(e)
     else:
         st.info("⬆️ Bitte lade die 'List of funded projects(armUGTS)' Excel-Datei hoch.")
