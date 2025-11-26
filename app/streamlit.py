@@ -397,7 +397,7 @@ with tab3:
             all_sheets[sheet_name_gapme] = df_combined  # Aktualisiertes DataFrame für sheet_name_gapme
 
             # Speichere die Datei mit den aktualisierten Tabellenblättern
-            file_name = f"{grantees_and_panel_member_excel.name}_updated.xlsx"
+            file_name = f"update_{grantees_and_panel_member_excel.name}"
             output_file = st.text_input("Name der Ausgabedatei:", value=file_name)
             
             with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
